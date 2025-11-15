@@ -4,7 +4,7 @@
 
 This repository provides a fully automated GitHub Actions workflow to download official macOS installers directly from Apple's servers and convert them into bootable ISO or DMG images.
 
-The generated images are uploaded to your repository's Releases page, making it easy to access them for virtual machines, system recovery, or other development needs.
+The generated images are uploaded as workflow artifacts, making them accessible for virtual machines, system recovery, or other development needs.
 
 ## Features
 
@@ -12,7 +12,7 @@ The generated images are uploaded to your repository's Releases page, making it 
 -   **Official Sources:** Downloads installers directly and securely from Apple's software update servers.
 -   **Multiple Formats:** Creates both `.iso` (for virtual machines) and `.dmg` (for USB installers) files.
 -   **Wide OS Support:** Capable of building installers for a range of macOS versions, from High Sierra to the latest release.
--   **Release Integration:** Automatically creates a GitHub Release and uploads the final image(s) as assets.
+-   **Workflow Artifacts:** Uploads the final image(s) as artifacts to the specific workflow run that generated them.
 -   **Efficient Caching:** Caches the downloaded installer to significantly speed up subsequent builds of the same version, saving time and runner costs.
 
 ## How to Use
@@ -34,7 +34,8 @@ To use this workflow for your own builds, please follow these steps:
 
 5.  **Download the Artifact:**
     -   The workflow will take approximately 20-60 minutes to complete, depending on the format and whether the installer is cached.
-    -   Once finished, go to the **Releases** section on the main page of your repository. The generated images will be attached as assets to a release tagged with the macOS version name (e.g., `sonoma`).
+    -   Once the workflow is complete, navigate to the summary page for that specific run. The generated images will be available for download in the **"Artifacts"** section at the bottom of the page.
+    -   **Note:** Workflow artifacts are temporary and will expire after a set period (configured for 7 days by default).
 
 ## Disclaimer
 
