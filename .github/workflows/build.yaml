@@ -88,7 +88,6 @@ jobs:
           fi
 
       - name: Create ISO Image
-        id: create_iso
         if: success() && env.download_failed == 'false' && (github.event.inputs.image_format == 'iso' || github.event.inputs.image_format == 'both')
         run: |
           MACOS_NAME="${{ github.event.inputs.macos_version }}"
@@ -107,16 +106,10 @@ jobs:
           sleep 2
           hdiutil makehybrid -hfs -udf -o "$IMAGE_FILE" "$SPARSE_IMAGE"
           
-          if [ -f "$IMAGE_FILE" ]; then
-            echo "ISO created: $IMAGE_FILE"
-            echo "image_file=$IMAGE_FILE" >> $GITHUB_OUTPUT
-          else
-            echo "Error: ISO file not created"
-            exit 1
-          fi
+          if [ ! -f "$IMAGE_FILE" ]; then echo "Error: ISO file not created"; exit 1; fi
+          echo "ISO created: $IMAGE_FILE"
 
       - name: Create DMG Image
-        id: create_dmg
         if: success() && env.download_failed == 'false' && (github.event.inputs.image_format == 'dmg' || github.event.inputs.image_format == 'both')
         run: |
           MACOS_NAME="${{ github.event.inputs.macos_version }}"
@@ -146,37 +139,12 @@ jobs:
           echo "Resizing DMG container to minimum size..."
           hdiutil resize -size min "$IMAGE_FILE"
           
-          if [ -f "$IMAGE_FILE" ]; then
-            echo "DMG created: $IMAGE_FILE"
-            echo "image_file=$IMAGE_FILE" >> $GITHUB_OUTPUT
-          else
-            echo "Error: DMG file not created"
-            exit 1
-          fi
-
-      - name: Prepare Release Assets
-        id: prepare_assets
-        if: success() && env.download_failed == 'false'
-        run: |
-          ASSET_PATHS=""
-          if [ -f "${{ steps.create_iso.outputs.image_file }}" ]; then
-            ASSET_PATHS="${{ steps.create_iso.outputs.image_file }}"
-          fi
-          if [ -f "${{ steps.create_dmg.outputs.image_file }}" ]; then
-            if [ -z "$ASSET_PATHS" ]; then
-              ASSET_PATHS="${{ steps.create_dmg.outputs.image_file }}"
-            else
-              ASSET_PATHS="${ASSET_PATHS}
-          ${{ steps.create_dmg.outputs.image_file }}"
-            fi
-          fi
-          echo "Assets to be uploaded:"
-          echo "$ASSET_PATHS"
-          echo "asset_paths=$ASSET_PATHS" >> $GITHUB_OUTPUT
-
+          if [ ! -f "$IMAGE_FILE" ]; then echo "Error: DMG file not created"; exit 1; fi
+          echo "DMG created: $IMAGE_FILE"
+          
       - name: Prepare Release Information
         id: prepare_release
-        if: steps.prepare_assets.outputs.asset_paths != ''
+        if: success() && env.download_failed == 'false'
         run: |
           export RELEASE_BODY="
           ## macOS ${{ github.event.inputs.macos_version }} Installers
@@ -213,19 +181,21 @@ jobs:
 
       - name: Generate Release Tag
         id: release_info
-        if: steps.prepare_assets.outputs.asset_paths != ''
+        if: success() && env.download_failed == 'false'
         run: |
           echo "tag_name=$(echo '${{ github.event.inputs.macos_version }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Create and Upload Release Asset
         id: create_release
         uses: softprops/action-gh-release@v2
-        if: steps.prepare_assets.outputs.asset_paths != ''
+        if: success() && env.download_failed == 'false'
         with:
           name: macOS ${{ github.event.inputs.macos_version }} Installers
           tag_name: ${{ steps.release_info.outputs.tag_name }}
           body_path: ${{ steps.prepare_release.outputs.body_path }}
-          files: ${{ steps.prepare_assets.outputs.asset_paths }}
+          files: |
+            ${{ github.workspace }}/*.iso
+            ${{ github.workspace }}/*.dmg
 
       - name: Final Summary
         if: always()
