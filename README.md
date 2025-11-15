@@ -6,7 +6,7 @@ This repository provides a fully automated GitHub Actions workflow to download o
 
 The generated images are uploaded to your repository's Releases page, making it easy to access them for virtual machines, system recovery, or other development needs.
 
-## ✨ Features
+## Features
 
 -   **Fully Automated:** Uses GitHub Actions for a serverless, "no-setup" experience.
 -   **Official Sources:** Downloads installers directly and securely from Apple's software update servers.
@@ -15,7 +15,7 @@ The generated images are uploaded to your repository's Releases page, making it 
 -   **Release Integration:** Automatically creates a GitHub Release and uploads the final image(s) as assets.
 -   **Efficient Caching:** Caches the downloaded installer to significantly speed up subsequent builds of the same version, saving time and runner costs.
 
-## 🚀 How to Use
+## How to Use
 
 To use this workflow for your own builds, please follow these steps:
 
@@ -36,7 +36,7 @@ To use this workflow for your own builds, please follow these steps:
     -   The workflow will take approximately 20-60 minutes to complete, depending on the format and whether the installer is cached.
     -   Once finished, go to the **Releases** section on the main page of your repository. The generated images will be attached as assets to a release tagged with the macOS version name (e.g., `sonoma`).
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 -   **Software Licensing:** This tool only automates the download of official software provided by Apple. You are responsible for adhering to Apple's End User License Agreement (EULA) for macOS.
 -   **Intended Use:** This project is intended for legitimate purposes, such as creating installers for virtual machines for software development, or for creating bootable USB drives to reinstall macOS on genuine Apple hardware.
@@ -44,6 +44,6 @@ To use this workflow for your own builds, please follow these steps:
     -   To install macOS on non-Apple hardware, a specialized bootloader such as **OpenCore** is required. The `.dmg` file produced by this workflow contains the installer, but it will not boot on a PC without a correctly configured OpenCore EFI.
     -   For building a "Hackintosh", we strongly recommend following the official **[Dortania's OpenCore Install Guide](https://dortania.github.io/OpenCore-Install-Guide/)**.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
