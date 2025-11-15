@@ -141,70 +141,34 @@ jobs:
           
           if [ ! -f "$IMAGE_FILE" ]; then echo "Error: DMG file not created"; exit 1; fi
           echo "DMG created: $IMAGE_FILE"
-          
-      - name: Prepare Release Information
-        id: prepare_release
-        if: success() && env.download_failed == 'false'
-        run: |
-          export RELEASE_BODY="
-          ## macOS ${{ github.event.inputs.macos_version }} Installers
-
-          This release contains bootable installer images for macOS ${{ github.event.inputs.macos_version }}.
-
-          ### Asset Types
-          - **\`.iso\` files:** For use in virtual machines (Proxmox, VMware, VirtualBox, QEMU). Attach the ISO to a virtual CD/DVD drive to begin installation.
-          - **\`.dmg\` files:** For creating physical bootable USB drives. Please read the instructions below carefully based on your target hardware.
-
-          ---
-
-          ### Creating a Bootable USB from a DMG
-
-          #### For Apple Hardware (Macs)
-          This method is for creating an installer to use on a genuine Apple Mac.
-          > **:warning: DANGER:** This is a destructive operation that will erase the contents of your USB drive. Double-check the disk identifier.
-          > 1.  **Identify your USB drive:** On your Mac or Linux machine, run \`diskutil list\` or \`lsblk\`.
-          > 2.  **Unmount the drive:** \`diskutil unmountDisk /dev/diskX\` (replace \`X\` with your disk number).
-          > 3.  **Write the image:** \`sudo dd if=/path/to/your.dmg of=/dev/rdiskX bs=1m\` (using \`rdisk\` on macOS is faster).
-
-          #### For Non-Apple Hardware (PCs / \"Hackintosh\")
-          **Important:** Non-Apple hardware cannot boot the macOS installer directly. A specialized bootloader is required.
-          
-          > The process involves writing this DMG to a USB and adding a custom-built **OpenCore EFI** configuration. The DMG provides the macOS installer files; OpenCore makes them bootable on your PC.
-
-          **Process Overview:**
-          1.  **Write DMG to USB:** Use a tool like [Rufus](https://rufus.ie/) or [balenaEtcher](https://www.balena.io/etcher/) to write this \`.dmg\` file to your USB drive.
-          2.  **Build Your OpenCore EFI:** You must create an EFI configuration specific to your PC's hardware (CPU, motherboard, GPU). We strongly recommend following the official **[Dortania's OpenCore Install Guide](https://dortania.github.io/OpenCore-Install-Guide/)**. Do not use pre-built EFIs from the internet.
-          3.  **Deploy EFI to USB:** Mount the EFI partition of your USB drive and copy your custom \`EFI\` folder into it.
-          "
-          echo "$RELEASE_BODY" > release_notes.md
-          echo "body_path=release_notes.md" >> $GITHUB_OUTPUT
-
-      - name: Generate Release Tag
-        id: release_info
-        if: success() && env.download_failed == 'false'
-        run: |
-          echo "tag_name=$(echo '${{ github.event.inputs.macos_version }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
-      - name: Create and Upload Release Asset
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        if: success() && env.download_failed == 'false'
+      
+      - name: Upload ISO Artifact
+        if: success() && env.download_failed == 'false' && (github.event.inputs.image_format == 'iso' || github.event.inputs.image_format == 'both')
+        uses: actions/upload-artifact@v4
         with:
-          name: macOS ${{ github.event.inputs.macos_version }} Installers
-          tag_name: ${{ steps.release_info.outputs.tag_name }}
-          body_path: ${{ steps.prepare_release.outputs.body_path }}
-          files: |
-            ${{ github.workspace }}/*.iso
-            ${{ github.workspace }}/*.dmg
+          name: macOS-${{ github.event.inputs.macos_version }}-${{ steps.fetch_installers.outputs.version }}-ISO
+          path: ${{ github.workspace }}/*.iso
+          retention-days: 7
+
+      - name: Upload DMG Artifact
+        if: success() && env.download_failed == 'false' && (github.event.inputs.image_format == 'dmg' || github.event.inputs.image_format == 'both')
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-${{ github.event.inputs.macos_version }}-${{ steps.fetch_installers.outputs.version }}-DMG
+          path: ${{ github.workspace }}/*.dmg
+          retention-days: 7
 
       - name: Final Summary
         if: always()
         run: |
+          WORKFLOW_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           if [ "${{ job.status }}" == 'success' ] && [ "${{ env.download_failed }}" == 'false' ]; then
             echo "## ✅ Build Successful" >> $GITHUB_STEP_SUMMARY
-            echo "The installer image(s) for **macOS ${{ github.event.inputs.macos_version }} (${{ steps.fetch_installers.outputs.version }})** have been successfully generated and uploaded." >> $GITHUB_STEP_SUMMARY
+            echo "The installer image(s) for **macOS ${{ github.event.inputs.macos_version }} (${{ steps.fetch_installers.outputs.version }})** have been successfully generated." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "➡️ **[View the release to download the asset(s)](${{ steps.create_release.outputs.html_url }})**" >> $GITHUB_STEP_SUMMARY
+            echo "You can download the generated file(s) from the 'Artifacts' section of this workflow run." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "➡️ **[View Workflow Run to Download Artifact(s)]($WORKFLOW_URL)**" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ env.download_failed }}" == 'true' ]; then
             echo "## ❌ Build Failed: Installer Download Error" >> $GITHUB_STEP_SUMMARY
             echo "> The macOS installer could not be downloaded from Apple's servers. This is often a temporary network issue with the GitHub runner. **Please re-run the workflow to try again.**" >> $GITHUB_STEP_SUMMARY
