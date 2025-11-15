@@ -128,16 +128,22 @@ jobs:
           echo "Creating DMG image..."
           hdiutil create -size 20g -volname "macOS" -fs HFS+ -type UDIF -attach "$IMAGE_FILE"
           DISK_ID=$(diskutil list | grep "macOS" | head -1 | awk '{print $NF}' | sed 's/s[0-9]*$//')
+          
+          echo "Creating install media on DMG..."
           sudo "$INSTALLER_PATH/Contents/Resources/createinstallmedia" --volume "/Volumes/macOS" --nointeraction
           sync && sleep 5
+          
+          echo "Shrinking partition to consolidate data..."
           INSTALLER_PARTITION="${DISK_ID}s2"
           MIN_SIZE=$(diskutil resizeVolume "$INSTALLER_PARTITION" limits | grep "Minimum" | sed -n 's/.*(\([0-9]*\) Bytes).*/\1/p')
           diskutil resizeVolume "$INSTALLER_PARTITION" "${MIN_SIZE}B" free free 0
           sync && sleep 5
-          diskutil resizeVolume "$INSTALLER_PARTITION" 0
-          sync && sleep 5
+          
+          echo "Detaching disk image..."
           hdiutil detach "$DISK_ID" -force
           sleep 2
+          
+          echo "Resizing DMG container to minimum size..."
           hdiutil resize -size min "$IMAGE_FILE"
           
           if [ -f "$IMAGE_FILE" ]; then
