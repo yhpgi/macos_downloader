@@ -75,7 +75,7 @@ jobs:
             if [ $attempt -eq $RETRIES_COUNT ]; then
               echo "download_success=false" >> $GITHUB_OUTPUT; exit 1
             fi
-            sleep 5
+            sleep 10
           done
 
       - name: Check download status
@@ -100,10 +100,21 @@ jobs:
           echo "Creating ISO image..."
           hdiutil create -size 20g -volname "macOS" -fs HFS+ -type SPARSE -attach "$SPARSE_IMAGE"
           DISK_ID=$(diskutil list | grep "macOS" | head -1 | awk '{print $NF}' | sed 's/s[0-9]*$//')
+          
+          echo "Creating install media on ISO..."
           sudo "$INSTALLER_PATH/Contents/Resources/createinstallmedia" --volume "/Volumes/macOS" --nointeraction
-          sync && sleep 5
-          hdiutil detach "$DISK_ID" -force
-          sleep 2
+          sync && sleep 10
+          
+          echo "Detaching disk image..."
+          for i in {1..5}; do
+            sudo hdiutil detach "/dev/$DISK_ID" -force && break
+            echo "Retry detach..."
+            sleep 10
+            sudo diskutil unmountDisk force "/dev/$DISK_ID" || true
+          done
+          sleep 10
+          
+          echo "Converting to ISO..."
           hdiutil makehybrid -hfs -udf -o "$IMAGE_FILE" "$SPARSE_IMAGE"
           
           if [ ! -f "$IMAGE_FILE" ]; then echo "Error: ISO file not created"; exit 1; fi
@@ -124,17 +135,26 @@ jobs:
           
           echo "Creating install media on DMG..."
           sudo "$INSTALLER_PATH/Contents/Resources/createinstallmedia" --volume "/Volumes/macOS" --nointeraction
-          sync && sleep 5
+          sync && sleep 10
           
           echo "Shrinking partition to consolidate data..."
           INSTALLER_PARTITION="${DISK_ID}s2"
           MIN_SIZE=$(diskutil resizeVolume "$INSTALLER_PARTITION" limits | grep "Minimum" | sed -n 's/.*(\([0-9]*\) Bytes).*/\1/p')
-          diskutil resizeVolume "$INSTALLER_PARTITION" "${MIN_SIZE}B" free free 0
-          sync && sleep 5
+          if [ -n "$MIN_SIZE" ]; then
+            sudo diskutil resizeVolume "$INSTALLER_PARTITION" "${MIN_SIZE}B" free free 0
+            sync && sleep 10
+          else
+            echo "Could not determine minimum size, skipping shrink."
+          fi
           
           echo "Detaching disk image..."
-          hdiutil detach "$DISK_ID" -force
-          sleep 2
+          for i in {1..5}; do
+            sudo hdiutil detach "/dev/$DISK_ID" -force && break
+            echo "Retry detach..."
+            sleep 10
+            sudo diskutil unmountDisk force "/dev/$DISK_ID" || true
+          done
+          sleep 10
           
           echo "Resizing DMG container to minimum size..."
           hdiutil resize -size min "$IMAGE_FILE"
