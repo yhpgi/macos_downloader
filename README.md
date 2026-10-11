@@ -2,49 +2,38 @@
 
 [![Build macOS Installer ISO/DMG image](https://github.com/yhpgi/macos_downloader/actions/workflows/build.yaml/badge.svg)](https://github.com/yhpgi/macos_downloader/actions/workflows/build.yaml)
 
-This repository provides a fully automated GitHub Actions workflow to download official macOS installers directly from Apple's servers and convert them into bootable ISO or DMG images.
-
-The generated images are uploaded as workflow artifacts, making them accessible for virtual machines, system recovery, or other development needs.
+Download official macOS installers from Apple and build ISO or DMG images using GitHub Actions. No local setup required.
 
 ## Features
 
--   **Fully Automated:** Uses GitHub Actions for a serverless, "no-setup" experience.
--   **Official Sources:** Downloads installers directly and securely from Apple's software update servers.
--   **Multiple Formats:** Creates both `.iso` (for virtual machines) and `.dmg` (for USB installers) files.
--   **Wide OS Support:** Capable of building installers for a range of macOS versions, from High Sierra to the latest release.
--   **Workflow Artifacts:** Uploads the final image(s) as artifacts to the specific workflow run that generated them.
--   **Efficient Caching:** Caches the downloaded installer to significantly speed up subsequent builds of the same version, saving time and runner costs.
+- **Official downloads** — Retrieves installers directly from Apple's servers.
+- **Multiple formats** — Build `.iso`, `.dmg`, or both.
+- **Multiple macOS versions** — From High Sierra to supported newer releases.
+- **Caching** — Reuses cached installers to reduce build time.
+- **Artifacts** — Download generated images directly from GitHub Actions.
 
-## How to Use
+## Usage
 
-To use this workflow for your own builds, please follow these steps:
+1. **Fork** this repository.
+2. Open the **Actions** tab in your fork.
+3. Select **Build macOS Installer ISO/DMG image**.
+4. Click **Run workflow**.
+5. Choose the macOS version and image format (`iso`, `dmg`, or `both`).
+6. Start the workflow and wait for it to complete.
+7. Download the generated image from the run's **Artifacts** section.
 
-1.  **Fork this Repository:** Click the "Fork" button at the top-right of this page to create a copy of this repository under your own GitHub account.
+Builds typically take 20–60 minutes, depending on the selected format and cache availability. Artifacts expire after 7 days by default.
 
-2.  **Navigate to the Actions Tab:** In your forked repository, go to the **Actions** tab. You may need to enable GitHub Actions if prompted.
+## Compatibility Notes
 
-3.  **Run the Workflow:**
-    -   In the left sidebar, click on the **"Build macOS Installer ISO/DMG image"** workflow.
-    -   Click the **"Run workflow"** dropdown button on the right side.
-
-4.  **Configure the Build:**
-    -   **Select a macOS version to build:** Choose the desired OS from the dropdown (e.g., `Sonoma`, `Ventura`).
-    -   **Select image format(s) to build:** Choose `iso`, `dmg`, or `both`.
-    -   Click the green **"Run workflow"** button to start the build.
-
-5.  **Download the Artifact:**
-    -   The workflow will take approximately 20-60 minutes to complete, depending on the format and whether the installer is cached.
-    -   Once the workflow is complete, navigate to the summary page for that specific run. The generated images will be available for download in the **"Artifacts"** section at the bottom of the page.
-    -   **Note:** Workflow artifacts are temporary and will expire after a set period (configured for 7 days by default).
+- **Virtual machines:** Use the generated ISO with a compatible VM.
+- **Apple hardware:** Use the appropriate image for your installation or recovery workflow.
+- **Non-Apple hardware:** A DMG alone is not sufficient to boot macOS on a PC. A compatible bootloader and configuration are required. See the [Dortania OpenCore Install Guide](https://dortania.github.io/OpenCore-Install-Guide/).
 
 ## Disclaimer
 
--   **Software Licensing:** This tool only automates the download of official software provided by Apple. You are responsible for adhering to Apple's End User License Agreement (EULA) for macOS.
--   **Intended Use:** This project is intended for legitimate purposes, such as creating installers for virtual machines for software development, or for creating bootable USB drives to reinstall macOS on genuine Apple hardware.
--   **Non-Apple Hardware ("Hackintosh"):**
-    -   To install macOS on non-Apple hardware, a specialized bootloader such as **OpenCore** is required. The `.dmg` file produced by this workflow contains the installer, but it will not boot on a PC without a correctly configured OpenCore EFI.
-    -   For building a "Hackintosh", we strongly recommend following the official **[Dortania's OpenCore Install Guide](https://dortania.github.io/OpenCore-Install-Guide/)**.
+You are responsible for complying with Apple's macOS Software License Agreement and applicable terms of use.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE)
